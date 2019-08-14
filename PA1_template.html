@@ -380,18 +380,225 @@ $(document).ready(function () {
 
 <div id="loading-and-preprocessing-the-data" class="section level2">
 <h2>Loading and preprocessing the data</h2>
+<p>Show any code that is needed to</p>
+<ol style="list-style-type: decimal">
+<li>Load the data (i.e. read.csv() )</li>
+<li>Process/transform the data (if necessary) into a format suitable for your analysis</li>
+</ol>
+<pre class="r"><code>library(&quot;dplyr&quot;)
+library(lubridate)
+library(ggplot2)
+
+#
+# 1. Reading in dataset and processing (unzip, load into mydata dataframe)
+#
+
+unzip(&#39;activity.zip&#39;)
+mydata&lt;-read.csv(&#39;activity.csv&#39;,header = TRUE, sep = &quot;,&quot;, dec = &quot;.&quot;)
+# change to date format
+mydata$date&lt;-as.Date(mydata$date,&quot;%Y-%m-%d&quot;)
+
+# add column with # of weekday which will come in handy later for separating between Weekend 
+# and Weekday
+mydata$weekday&lt;-wday(mydata$date)</code></pre>
 </div>
 <div id="what-is-mean-total-number-of-steps-taken-per-day" class="section level2">
 <h2>What is mean total number of steps taken per day?</h2>
+<p>For this part of the assignment, we are told that we can ignore the missing values in the dataset. The tasks are the following, and are contained in items 2 and 3 in the <strong>Commit containing full submission</strong> section below, which is how I commented the code:</p>
+<ol style="list-style-type: decimal">
+<li>Calculate the total number of steps taken per day</li>
+<li>Make a histogram of the total number of steps taken each day</li>
+<li>Calculate and report the mean and median of the total number of steps taken per day</li>
+</ol>
+<pre class="r"><code>#
+# 2. Histogram of total steps by date, before removal of NAs 
+#
+
+total_by_day &lt;- aggregate(steps ~ date, mydata, sum)
+
+# hist(total_by_day$steps,xlab=&quot;Number of Steps in Day&quot;,
+#     ylab=&quot;Frequency (Number of Days)&quot;,breaks=10,main=&#39;Histogram of Total Steps in Day&#39;)
+
+data_bydate&lt;-group_by(mydata,date)
+stepsbydate&lt;-summarize(data_bydate,total_steps=sum(steps))
+png(file=&quot;./instructions_fig/steps_histo.png&quot;,width=480,height=480)
+hist(stepsbydate$total_steps,xlab=&quot;Number of Steps in Day&quot;,
+     ylab=&quot;Frequency (Number of Days)&quot;,breaks=10,main=&#39;Histogram of Total Steps in Day&#39;)
+dev.off()</code></pre>
+<pre><code>## png 
+##   2</code></pre>
+<pre class="r"><code>#
+# 3. Mean and median steps per day
+#
+
+# two ways I tried to do this
+stepmean1&lt;-mean(total_by_day$steps)
+stepmedian1&lt;-median(total_by_day$steps)
+print(c(&quot;Mean steps per day is:&quot;,round(stepmean1,3)))</code></pre>
+<pre><code>## [1] &quot;Mean steps per day is:&quot; &quot;10766.189&quot;</code></pre>
+<pre class="r"><code>print(c(&quot;Median steps per day is:&quot;,round(stepmedian1,3)))</code></pre>
+<pre><code>## [1] &quot;Median steps per day is:&quot; &quot;10765&quot;</code></pre>
+<pre class="r"><code># this ignores the days with NAs
+smean&lt;-mean(stepsbydate$total_steps[!is.na(stepsbydate$total_steps)])
+smedian&lt;-median(stepsbydate$total_steps[!is.na(stepsbydate$total_steps)])
+print(c(&quot;Method 2: Mean steps per day is:&quot;,round(stepmean1,3)))</code></pre>
+<pre><code>## [1] &quot;Method 2: Mean steps per day is:&quot; &quot;10766.189&quot;</code></pre>
+<pre class="r"><code>print(c(&quot;Method 2: Median steps per day is:&quot;,round(stepmedian1,3)))</code></pre>
+<pre><code>## [1] &quot;Method 2: Median steps per day is:&quot;
+## [2] &quot;10765&quot;</code></pre>
 </div>
 <div id="what-is-the-average-daily-activity-pattern" class="section level2">
 <h2>What is the average daily activity pattern?</h2>
+<p>Again, the numeration in the commented code is different than the numbers of this particular section.</p>
+<ol style="list-style-type: decimal">
+<li>Make a time series plot (i.e. type = “l”) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)</li>
+<li>Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?</li>
+</ol>
+<pre class="r"><code>#
+# 4. Time series plot of the average number of steps taken
+#
+
+# easiest way
+total_by_interval &lt;- aggregate(steps ~ interval, mydata, sum)
+mean_by_interval &lt;- aggregate(steps ~ interval, mydata, mean)
+
+# manual way, summing total and then dividing by # of days w/o NA
+good_days&lt;-sum(!is.na(stepsbydate$total_steps))
+calc_mean_by_interval&lt;-total_by_interval
+calc_mean_by_interval$steps&lt;-calc_mean_by_interval$steps/good_days
+
+# this shows the answers are identical
+# mean_by_interval==calc_mean_by_interval
+
+# these do not work because of NAs; once cleaned of NAs, these will work
+data_byinterval&lt;-group_by(mydata,interval)
+interval_mean&lt;-summarize(data_byinterval,mean_steps=mean(steps))
+
+# this is the plot
+png(file=&#39;./instructions_fig/mean_interval.png&#39;,width=480,height=480)
+with(mean_by_interval,plot(x=interval,y=steps,xlab=&#39;Interval #&#39;,
+          ylab=&quot;Mean Steps During Interval&quot;,type=&quot;l&quot;,main=&quot;Mean # of Steps by Interval&quot;))
+dev.off()</code></pre>
+<pre><code>## png 
+##   2</code></pre>
+<pre class="r"><code>#
+# 5. The 5-minute interval that, on average, contains the maximum number of steps
+#
+max_interval&lt;-mean_by_interval$interval[which(mean_by_interval$steps==max(mean_by_interval$steps))]
+the_max&lt;-round(max(mean_by_interval$steps),3)
+     
+print(paste(&quot;Max is &quot;,the_max,&quot; and occurs at interval &quot;,max_interval))</code></pre>
+<pre><code>## [1] &quot;Max is  206.17  and occurs at interval  835&quot;</code></pre>
+<pre class="r"><code># max is 206.1698, interval is 835</code></pre>
 </div>
 <div id="imputing-missing-values" class="section level2">
 <h2>Imputing missing values</h2>
+<p>Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.</p>
+<ol style="list-style-type: decimal">
+<li>Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)</li>
+<li>Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.</li>
+<li>Create a new dataset that is equal to the original dataset but with the missing data filled in.</li>
+<li>Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?</li>
+</ol>
+<p>Actually, by just removing the days full on NA’s, we do not need to impute any data into any intervals. We in effect did the same in calculating the median and mean beforehand, so there is no effect on these values. If some days were partially full of data, then imputing an average value for the missing values would probably increase the total mean of steps for a full day.</p>
+<pre class="r"><code>#
+# 6. Code to describe and show a strategy for imputing missing data
+#
+summary(mydata$steps)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA&#39;s 
+##    0.00    0.00    0.00   37.38   12.00  806.00    2304</code></pre>
+<pre class="r"><code>num_nas&lt;-sum(is.na(mydata$steps))
+dates_toremove&lt;-stepsbydate$date[is.na(stepsbydate$total_steps)]
+table(mydata$date[is.na(mydata$steps)])</code></pre>
+<pre><code>## 
+## 2012-10-01 2012-10-08 2012-11-01 2012-11-04 2012-11-09 2012-11-10 
+##        288        288        288        288        288        288 
+## 2012-11-14 2012-11-30 
+##        288        288</code></pre>
+<pre class="r"><code>print(paste(&quot;Number of NA&#39;s is &quot;,num_nas))</code></pre>
+<pre><code>## [1] &quot;Number of NA&#39;s is  2304&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;There are only &quot;,length(dates_toremove),&quot; days with NAs, and they are completely full&quot;))</code></pre>
+<pre><code>## [1] &quot;There are only  8  days with NAs, and they are completely full&quot;</code></pre>
+<pre class="r"><code>dates_toremove&lt;-stepsbydate$date[is.na(stepsbydate$total_steps)]
+
+# now mydata2 has no NAs
+mydata2&lt;-filter(mydata,!(date%in%dates_toremove))
+data_bydate2&lt;-group_by(mydata2,date)
+stepsbydate2&lt;-summarize(data_bydate2,total_steps=sum(steps))
+
+#
+# 7. Histogram after missing values imputed
+#
+png(file=&quot;./instructions_fig/steps_histogram2.png&quot;,width=480,height=480)
+hist(stepsbydate2$total_steps,xlab=&quot;Number of Steps in Day&quot;,
+     ylab=&quot;Frequency (Number of Days)&quot;,breaks=10,main=&#39;Histogram of Total Steps in Day, NAs Removed&#39;)
+
+dev.off()</code></pre>
+<pre><code>## png 
+##   2</code></pre>
+<pre class="r"><code>mean2&lt;-mean(stepsbydate2$total_steps)
+median2&lt;-median(stepsbydate2$total_steps)
+print(paste(&quot;Mean from cleaned data = &quot;,mean2))</code></pre>
+<pre><code>## [1] &quot;Mean from cleaned data =  10766.1886792453&quot;</code></pre>
+<pre class="r"><code>print(paste(&quot;Median from cleaned data = &quot;,median2))</code></pre>
+<pre><code>## [1] &quot;Median from cleaned data =  10765&quot;</code></pre>
 </div>
 <div id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends" class="section level2">
 <h2>Are there differences in activity patterns between weekdays and weekends?</h2>
+<p>We use the cleaned dataset for this part. From the beginning, when we loade the data, we had added a column variable with the ‘weekend’/‘weekday’ factor. The charts show that weekdays have a higher peak early in the day, but the mean steps during the weekend is higher throughout the day. And the mean and median values are higher on the weekend.</p>
+<pre class="r"><code>#
+# 8.Panel plot comparing the average number of steps taken per 5-minute interval 
+#
+# across weekdays and weekends; we 
+weekdays_data&lt;-filter(data_bydate2,(weekday&gt;1&amp;weekday&lt;7))
+weekend_data&lt;-filter(data_bydate2,(weekday==1|weekday==7))
+
+total_by_weekday &lt;- aggregate(steps ~ date, weekdays_data, sum)
+total_by_weekend &lt;- aggregate(steps ~ date, weekend_data, sum)
+stepmean_we&lt;-mean(total_by_weekend$steps)
+stepmedian_we&lt;-median(total_by_weekend$steps)
+stepmean_wd&lt;-mean(total_by_weekday$steps)
+stepmedian_wd&lt;-median(total_by_weekday$steps)
+
+print(c(&quot;Mean steps per weekday is:&quot;,round(stepmean_wd,3)))</code></pre>
+<pre><code>## [1] &quot;Mean steps per weekday is:&quot; &quot;10177.333&quot;</code></pre>
+<pre class="r"><code>print(c(&quot;Median steps per weekday is:&quot;,round(stepmedian_wd,3)))</code></pre>
+<pre><code>## [1] &quot;Median steps per weekday is:&quot; &quot;10304&quot;</code></pre>
+<pre class="r"><code>print(c(&quot;Mean steps per weekend is:&quot;,round(stepmean_we,3)))</code></pre>
+<pre><code>## [1] &quot;Mean steps per weekend is:&quot; &quot;12406.571&quot;</code></pre>
+<pre class="r"><code>print(c(&quot;Median steps per weekend is:&quot;,round(stepmedian_we,3)))</code></pre>
+<pre><code>## [1] &quot;Median steps per weekend is:&quot; &quot;12130&quot;</code></pre>
+<pre class="r"><code>data_byinterval_wd&lt;-group_by(weekdays_data,interval)
+interval_mean_wd&lt;-summarize(data_byinterval_wd,mean_steps=mean(steps))
+interval_mean_wd$type&lt;-&quot;Weekday&quot;
+
+data_byinterval_we&lt;-group_by(weekend_data,interval)
+interval_mean_we&lt;-summarize(data_byinterval_we,mean_steps=mean(steps))
+interval_mean_we$type&lt;-&quot;Weekend&quot;
+mrg&lt;-rbind(interval_mean_we,interval_mean_wd)
+
+png(file=&quot;./instructions_fig/weekend_vs_weekday2.png&quot;,width=480,height=480)
+g&lt;-ggplot(mrg,aes(x=interval,y=mean_steps),color=type) 
+g+facet_grid(type~.)+geom_line()+labs(x=&quot;Interval&quot;,y=&quot;Mean Steps Per Interval&quot;,title=&quot;Mean Steps Comparison&quot;)
+
+dev.off()</code></pre>
+<pre><code>## png 
+##   2</code></pre>
+</div>
+<div id="commit-containing-full-submission" class="section level2">
+<h2>Commit containing full submission</h2>
+<p>From the Coursera Project description, there are 9 requirements: 5 requirements for code (items 1,3,5,6, and 9) and 4 plots. The comments in <strong>analysis.R</strong> use the numeration below, which don’t exactly match the outline provided in the Rmd file.</p>
+<ol style="list-style-type: decimal">
+<li>Code for reading in the dataset and/or processing the data (contained in <strong>analysis.R</strong>)</li>
+<li>Histogram of the total number of steps taken each day</li>
+<li>Mean and median number of steps taken each day</li>
+<li>Time series plot of the average number of steps taken</li>
+<li>The 5-minute interval that, on average, contains the maximum number of steps</li>
+<li>Code to describe and show a strategy for imputing missing data (contained in <strong>analysis.R</strong>)</li>
+<li>Histogram of the total number of steps taken each day after missing values are imputed</li>
+<li>Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends</li>
+<li>All of the R code needed to reproduce the results (numbers, plots, etc.) in the report (contained in <strong>analysis.R</strong>)</li>
+</ol>
 </div>
 
 
