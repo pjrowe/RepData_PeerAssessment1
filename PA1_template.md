@@ -54,15 +54,20 @@ total_by_day <- aggregate(steps ~ date, mydata, sum)
 
 data_bydate<-group_by(mydata,date)
 stepsbydate<-summarize(data_bydate,total_steps=sum(steps))
-png(file="./instructions_fig/steps_histo.png",width=480,height=480)
+#png(file="./instructions_fig/steps_histo.png",width=480,height=480)
 hist(stepsbydate$total_steps,xlab="Number of Steps in Day",
      ylab="Frequency (Number of Days)",breaks=10,main='Histogram of Total Steps in Day')
+```
+
+![](PA1_template_files/figure-html/histogram1-1.png)<!-- -->
+
+```r
 dev.off()
 ```
 
 ```
-## png 
-##   2
+## null device 
+##           1
 ```
 
 ```r
@@ -139,15 +144,20 @@ data_byinterval<-group_by(mydata,interval)
 interval_mean<-summarize(data_byinterval,mean_steps=mean(steps))
 
 # this is the plot
-png(file='./instructions_fig/mean_interval.png',width=480,height=480)
+#png(file='./instructions_fig/mean_interval.png',width=480,height=480)
 with(mean_by_interval,plot(x=interval,y=steps,xlab='Interval #',
           ylab="Mean Steps During Interval",type="l",main="Mean # of Steps by Interval"))
+```
+
+![](PA1_template_files/figure-html/time_series-1.png)<!-- -->
+
+```r
 dev.off()
 ```
 
 ```
-## png 
-##   2
+## null device 
+##           1
 ```
 
 ```r
@@ -233,16 +243,20 @@ stepsbydate2<-summarize(data_bydate2,total_steps=sum(steps))
 #
 # 7. Histogram after missing values imputed
 #
-png(file="./instructions_fig/steps_histogram2.png",width=480,height=480)
+#png(file="./instructions_fig/steps_histogram2.png",width=480,height=480)
 hist(stepsbydate2$total_steps,xlab="Number of Steps in Day",
      ylab="Frequency (Number of Days)",breaks=10,main='Histogram of Total Steps in Day, NAs Removed')
+```
 
+![](PA1_template_files/figure-html/cleaned_data-1.png)<!-- -->
+
+```r
 dev.off()
 ```
 
 ```
-## png 
-##   2
+## null device 
+##           1
 ```
 
 ```r
@@ -324,16 +338,20 @@ interval_mean_we<-summarize(data_byinterval_we,mean_steps=mean(steps))
 interval_mean_we$type<-"Weekend"
 mrg<-rbind(interval_mean_we,interval_mean_wd)
 
-png(file="./instructions_fig/weekend_vs_weekday2.png",width=480,height=480)
+#png(file="./instructions_fig/weekend_vs_weekday2.png",width=480,height=480)
 g<-ggplot(mrg,aes(x=interval,y=mean_steps),color=type) 
 g+facet_grid(type~.)+geom_line()+labs(x="Interval",y="Mean Steps Per Interval",title="Mean Steps Comparison")
+```
 
+![](PA1_template_files/figure-html/weekday_vs_weekend-1.png)<!-- -->
+
+```r
 dev.off()
 ```
 
 ```
-## png 
-##   2
+## null device 
+##           1
 ```
 
 ## Commit containing full submission
